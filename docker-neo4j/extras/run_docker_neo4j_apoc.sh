@@ -62,11 +62,11 @@ docker run \
 -e NEO4J_apoc_export_file_enabled=true \
 -e NEO4J_dbms_security_procedures_unrestricted=apoc.\\\* \
 -e NEO4J_AUTH=neo4j/C9rctBr08k0er \
--v "$PWD/plugins":/plugins \
+-v "datadisk/neo4j/plugins":/plugins \
 -p 7474:7474 \
 -p 7687:7687 \
--v "$PWD/data":/data \
--v "$PWD/import":/var/lib/neo4j/import \
+-v "datadisk/neo4j/data":/data \
+-v "datadisk/neo4j/import":/var/lib/neo4j/import \
 -v "/datadisk/logs/neo4j":/logs \
 --user="$(id -u neo4j):$(id -g neo4j)" \
 --name=neo4j \
