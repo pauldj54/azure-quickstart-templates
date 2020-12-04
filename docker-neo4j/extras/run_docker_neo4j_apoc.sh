@@ -4,25 +4,17 @@
 
 NEO4J_VERSION=4.1.3
 
-APOC_VERSIONS_JSON=https://raw.githubusercontent.com/neo4j-contrib/neo4j-apoc-procedures/master/versions.json
-# Curl command below returns error and therefore the APO_VERSIONS_JSON was downloaded manually. 
-# To find the mapping to the apoc version visit the link above
+# Create neo4j group and user
 
-[ -d plugins ] || mkdir plugins
-[ -d plugins ] || mkdir data
+sudo groupadd -r neo4j
 
-cd plugins
+sudo useradd -r -s /sbin/nologin neo4j
 
-# download apoc if not yet there.
-# note: we need to follow redirects and want to use orig filename
-# gotcha: if you have a non-matching version of apoc, this will *not* fail.
-#if ! ls apoc-*-all.jar 1> /dev/null 2>&1; then
-#       # resolve correct apoc version
-#       APOC_URL=`curl -s $APOC_VERSIONS_JSON | jq -r ".[] | select (.neo4j == \"$NEO4J_VERSION\") | [.jar] | first"`
-#       #echo $APOC_URL
+sudo usermod -a -G neo4j neo4j
+
+cd /datadisk/plugins
+
 curl -L -C - -O -J "https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/4.1.0.4/apoc-4.1.0.4-all.jar"
-#fi
-
 
 cd ..
 
