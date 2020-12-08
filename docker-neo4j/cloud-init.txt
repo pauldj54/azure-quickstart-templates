@@ -70,6 +70,7 @@ write_files:
       sudo usermod -a -G neo4j "${docker_user}"
       # add neo4j user to docker group
       sudo usermod -aG docker neo4j
+      sudo usermod -aG docker azureuser
       cd /datadisk/neo4j/plugins
       curl -L -C - -O -J "https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/4.1.0.4/apoc-4.1.0.4-all.jar"
       cd ..
@@ -84,11 +85,11 @@ write_files:
       -e NEO4J_apoc_export_file_enabled=true \
       -e NEO4J_dbms_security_procedures_unrestricted=apoc.\\\* \
       -e NEO4J_AUTH=neo4j/C9rctBr08k0er \
-      -v "datadisk/neo4j/plugins":/plugins \
+      -v "/datadisk/neo4j/plugins":/plugins \
       -p 7474:7474 \
       -p 7687:7687 \
-      -v "datadisk/neo4j/data":/data \
-      -v "datadisk/neo4j/import":/var/lib/neo4j/import \
+      -v "/datadisk/neo4j/data":/data \
+      -v "/datadisk/neo4j/import":/var/lib/neo4j/import \
       -v "/datadisk/logs/neo4j":/logs \
       --user="$(id -u neo4j):$(id -g neo4j)" \
       --name=neo4j \
