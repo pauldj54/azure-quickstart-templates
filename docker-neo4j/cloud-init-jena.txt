@@ -38,53 +38,24 @@ write_files:
       #!/bin/bash
       # * curl, unzip and jq being installed
       # Create jena user with no login
-      sudo useradd -M jena
-      sudo usermod -L jena
       # Create data directory
       sudo mkdir -p /datadisk/jena/data/fuseki 
-      sudo chown -R jena /datadisk/jena/data/fuseki
-      sudo chgrp -R jena /datadisk/jena/data/fuseki
-      # Create import directory
-      sudo mkdir -p /datadisk/jena/import
-      sudo chown -R jena /datadisk/jena/import
-      sudo chgrp -R jena /datadisk/jena/import
-      # Create plugins directory
-      sudo mkdir -p /datadisk/jena/plugins
-      sudo chown -R jena /datadisk/jena/plugins
-      sudo chgrp -R jena /datadisk/jena/plugins
-      #Group gets write permissions here
-      sudo chmod -R u+rwX,g+rwX,o+wrx /datadisk/jena/plugins 
-      # Create a logs group for all things log related
-      sudo groupadd logs
-      # add jena to logs group
-      sudo usermod -a -G logs jena
-      sudo mkdir -p /datadisk/logs/jena
-      sudo chown -R root /datadisk/logs/jena
-      sudo chgrp -R logs /datadisk/logs/jena
-      sudo chmod -R u+rwX,g+rwX,o+wrx /datadisk/logs
-      # if docker does not run as root user
-      docker_user=jena
-      sudo usermod -a -G logs "${docker_user}"
-      sudo usermod -a -G jena "${docker_user}"
-      # add neojena4j user to docker group
-      sudo usermod -aG docker jena
+	  
+      # add azureuser user to docker group
       sudo usermod -aG docker azureuser
+	    sudo chmod -R 777 /datadisk/jena
       
       # pull docker image for apache jena
       docker pull stain/jena-fuseki
       # run docker image
-      sudo su - jena
       docker run \
       -d \
       -e ADMIN_PASSWORD=C9rctBr08k0er \
       -e JVM_ARGS=-Xmx2g \
-      -e FUSEKI_DATASET1=test-dataset \
-      -v "/datadisk/jena/plugins":/plugins \
       -p 3030:3030 \
       -v "/datadisk/jena/data/fuseki":/fuseki \
       --restart=always \
-      --user="$(id -u jena):$(id -g jena)" \
-      --name=jena \
+      --name=fuseki \
       stain/jena-fuseki   
 runcmd:
   - sh /etc/deployment/scripts/setup_data_disk.sh
