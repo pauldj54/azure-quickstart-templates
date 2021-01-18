@@ -1,62 +1,61 @@
-#cloud-config
-package_upgrade: true
-apt:
-  sources:
-    docker.list:
-      source: deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable
+--- 
+apt: 
+  sources: 
+    docker.list: 
       keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
-packages:
+      source: "deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable"
+package_upgrade: true
+packages: 
   - docker-ce
   - docker-ce-cli
-write_files:
-  - owner: root:root
+runcmd: 
+  - "sh /etc/deployment/scripts/setup_data_disk.sh"
+  - "sh /etc/deployment/scripts/run_docker_jena.sh"
+write_files: 
+  - 
+    content: |
+        #!/bin/bash
+        # This script is necessary to set up the data disk that will
+        # be passed into the Neo4j docker instance and used as the
+        # mount point for the Neo4J data.
+        # The ARM script only mounts a single data disk.  It is safe
+        # to assume that on a new VM, this data disk is located at /dev/sdc.
+        # If you have a more complicated setup, then do examine what this
+        # script is doing and modify accordingly.
+        # create a partition table for the disk
+        parted -s /dev/sdc mklabel msdos
+        # create a single large partition
+        parted -s /dev/sdc mkpart primary ext4 0\% 100\%
+        # install the file system
+        mkfs.ext4 /dev/sdc1
+        # create the mount point
+        mkdir /datadisk
+        # mount the disk
+        sudo mount /dev/sdc1 /datadisk/
+        # add mount to /etc/fstab to persist across reboots
+        echo "/dev/sdc1    /datadisk/    ext4    defaults 0 0" >> /etc/fstab
+    owner: "root:root"
     path: /etc/deployment/scripts/setup_data_disk.sh
-    content: |
-      #!/bin/bash
-      # This script is necessary to set up the data disk that will
-      # be passed into the Neo4j docker instance and used as the
-      # mount point for the Neo4J data.
-      # The ARM script only mounts a single data disk.  It is safe
-      # to assume that on a new VM, this data disk is located at /dev/sdc.
-      # If you have a more complicated setup, then do examine what this
-      # script is doing and modify accordingly.
-      # create a partition table for the disk
-      parted -s /dev/sdc mklabel msdos
-      # create a single large partition
-      parted -s /dev/sdc mkpart primary ext4 0\% 100\%
-      # install the file system
-      mkfs.ext4 /dev/sdc1
-      # create the mount point
-      mkdir /datadisk
-      # mount the disk
-      sudo mount /dev/sdc1 /datadisk/
-      # add mount to /etc/fstab to persist across reboots
-      echo "/dev/sdc1    /datadisk/    ext4    defaults 0 0" >> /etc/fstab
-  - owner: root:root
+  - 
+    content: "#!/bin/bash\n\
+        # * curl, unzip and jq being installed\n\
+        # Create jena user with no login\n\
+        # Create data directory\n\
+        sudo mkdir -p /datadisk/jena/data/fuseki \n\
+        # add azureuser user to docker group\n\
+        sudo usermod -aG docker azureuser\n\
+        sudo chmod -R 777 /datadisk/jena\n\
+        # pull docker image for apache jena\n\
+        docker pull stain/jena-fuseki\n\
+        # run docker image\n\
+        docker run \\\n\
+        -d \\\n\
+        -e ADMIN_PASSWORD=C9rctBr08k0er \\\n\
+        -e JVM_ARGS=-Xmx2g \\\n\
+        -p 3030:3030 \\\n\
+        -v \"/datadisk/jena/data/fuseki\":/fuseki \\\n\
+        --restart=always \\\n\
+        --name=fuseki \\\n\
+        stain/jena-fuseki   \n"
+    owner: "root:root"
     path: /etc/deployment/scripts/run_docker_jena.sh
-    content: |
-      #!/bin/bash
-      # * curl, unzip and jq being installed
-      # Create jena user with no login
-      # Create data directory
-      sudo mkdir -p /datadisk/jena/data/fuseki 
-	  
-      # add azureuser user to docker group
-      sudo usermod -aG docker azureuser
-	    sudo chmod -R 777 /datadisk/jena
-      
-      # pull docker image for apache jena
-      docker pull stain/jena-fuseki
-      # run docker image
-      docker run \
-      -d \
-      -e ADMIN_PASSWORD=C9rctBr08k0er \
-      -e JVM_ARGS=-Xmx2g \
-      -p 3030:3030 \
-      -v "/datadisk/jena/data/fuseki":/fuseki \
-      --restart=always \
-      --name=fuseki \
-      stain/jena-fuseki   
-runcmd:
-  - sh /etc/deployment/scripts/setup_data_disk.sh
-  - sh /etc/deployment/scripts/run_docker_jena.sh
