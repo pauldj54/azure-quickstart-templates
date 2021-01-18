@@ -3,22 +3,22 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "newStorageAccountName": {
-      "value": "GEN-UNIQUE"
+      "value": "sgaastorageacount091220"
     },
     "vmSize": {
-      "value": "Standard_D2"
+      "value": "Standard_D2s_v3"
     },
     "vmName": {
-      "value": "GEN-UNIQUE"
+      "value": "neo4jubuntu-1"
     },
     "adminUsername": {
-      "value": "GEN-UNIQUE"
+      "value": "azureuser"
     },
     "dnsNameForPublicIP": {
-      "value": "GEN-UNIQUE-8"
+      "value": "sgaa-neo4j-test1"
     },
     "adminPasswordOrKey": {
-      "value": "GEN-SSH-PUB-KEY"
+      "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDvbwipGTAY+E5vSnai2z108whz+hdIDgW1+376ZOmbl6r5Z5bI1U/CY7C+T10FgBHpsNxhnywkczsqY9Uag9zb7dNuuEtPLI04yktF5XLWVrTmpd5tIEnefmenwojZwrEbYIJ6iiWbV5IckQdyMuyzPi9xQCScYuMpZyeYpBlCDSCwrxDblPhMVh/9Ig/+tYPjlOoYKOKPBQeO6QE3S/OvmhKffpwzZ+MJoOYfr/e0snlPrCkMYvrYlXaLxC6zl2WhTgsLJsXK5L0dACJMon1wGR5GpB9oqBOpAkUrQ6rRMeLGNsBEPxbEo6quZLaOOPshN/8R7u7L/pUGL+moAQBgLlHzuSTmE9GQzyj/NzC4VTQA3FkVtk41H+69C5mLarGwMh/44bZiXTD3D1LNW1Zi5PfXk1H6aovKajsq2hp7Ydk/frsrJ8F7RmG+ZC2fBiYPRQfePlG7yfbBExOPJf3z0b05fGvsrSCmaDiNrq11g+ZquMlNjPUK0GjU1YArctI+AKxDB/fY2Gt5fJTG1Rs53DqH6XgxL59ZGoDBQEMFUyOiaM7PHJnKGyr0+bVTqtQ4dxf67/QnPoJr6mV33l/VyONDHOT5/FmSRxVmejScyQn60VGm34LIIIE9mt6QucXzYGQP/zNa8pbVP09F1qQ1S3ntEBntu+X13FwpXE8tqw== paul@cc-6202eed2-645cd9d54c-f7z7s"
     }
   }
 }

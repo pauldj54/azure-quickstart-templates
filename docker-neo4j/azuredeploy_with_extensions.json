@@ -85,6 +85,11 @@
     "OSDiskName": "osDisk",
     "nsgName": "[concat(parameters('vmName'),'NeoNSG')]",
     "nicName": "[concat(parameters('vmName'),'NeoNIC')]",
+    "dockerExtensionName": "DockerExtension",
+    "azureVMUtilsName": "vmCustomizationExt",
+    "azureVMRunDockerNeo4jName": "vmRunDockerNeo4jExt",
+    "azureVMUtilsScriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/docker-neo4j/extras/setup_data_disk.sh",
+    "azureVMRunDockerNeo4j": "https://raw.githubusercontent.com/pauldj54/azure-quickstart-templates/master/docker-neo4j/extras/run_docker_neo4j_apoc.sh",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
@@ -108,10 +113,7 @@
           }
         ]
       }
-    },
-    "cloudInit" : "https://raw.githubusercontent.com/pauldj54/azure-quickstart-templates/master/docker-neo4j/cloud-init.txt",
-    "customData": "[concat('#include\n', variables('cloudInit'))]",
-    "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]"
+    }
   },
   "resources": [
     {
@@ -285,8 +287,7 @@
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]",
-          "customData": "[base64(variables('customData'))]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -316,6 +317,68 @@
             }
           ]
         }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/', variables('azureVMUtilsName'))]",
+      "apiVersion": "2019-03-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.1",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "skipDos2Unix":false        
+        },
+      "protectedSettings": {
+        "commandToExecute": "bash setup_data_disk.sh",
+        "fileUris": ["[variables('azureVMUtilsScriptUrl')]"]
+      }        
+     }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/', variables('dockerExtensionName'))]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'),'/','extensions/',variables('azureVMUtilsName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "DockerExtension",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": { }
+      }
+    },
+   {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/', variables('azureVMRunDockerNeo4jName'))]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
+        "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'),'/','extensions/',variables('azureVMUtilsName'))]",
+        "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'),'/','extensions/',variables('dockerExtensionName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "skipDos2Unix":false        
+        },
+      "protectedSettings": {
+        "commandToExecute": "bash run_docker_neo4j_apoc.sh",
+        "fileUris": ["[variables('azureVMRunDockerNeo4j')]"]
+      } 
       }
     }
   ]

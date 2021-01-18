@@ -3,13 +3,18 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmName": {
-      "value": "GEN-UNIQUE"
+      "value": "neo4j-ubuntu-vm"
     },
     "vmAdminUsername": {
-      "value": "GEN-UNIQUE"
+      "value": "azureuser"
     },
     "sshKeyData": {
-      "value": "GEN-SSH-PUB-KEY"
+      "reference": {
+        "keyVault": {
+        "id": "/subscriptions/4638c7f6-2edc-4cdc-bc43-571c286e2171/resourceGroups/omnetric-proto-msdn/providers/Microsoft.KeyVault/vaults/om-kv-dev"
+        },
+        "secretName": "neo4j-ubuntu-vm"
+      }
     },
     "publicIPAddressDns": {
       "value": "GEN-UNIQUE-13"

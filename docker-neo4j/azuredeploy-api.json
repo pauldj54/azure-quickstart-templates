@@ -1,0 +1,668 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+    "location":{
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }, 
+    "publisherEmail": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "The email address of the owner of the service"
+      }
+    },
+    "publisherName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "The name of the owner of the service"
+      }
+    },
+    "api_mgmt_sku": {
+      "type": "string",
+      "defaultValue": "Developer",
+      "allowedValues": [
+        "Developer",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "The pricing tier of this API Management service"
+      }
+    },
+    "skuCount": {
+      "type": "string",
+      "defaultValue": "1",
+      "allowedValues": [
+        "1",
+        "2"
+      ],
+      "metadata": {
+        "description": "The instance size of this API Management service."
+      }
+    }
+},
+    "variables": {     
+    "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]"
+    },
+  "resources": [
+      {
+      "type": "Microsoft.ApiManagement/service",
+      "apiVersion": "2019-12-01",
+      "name": "[variables('apiManagementServiceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('api_mgmt_sku')]",
+        "capacity": "[parameters('skuCount')]"
+      },
+      "properties": {
+        "publisherEmail": "[parameters('publisherEmail')]",
+        "publisherName": "[parameters('publisherName')]",
+        "hostnameConfigurations": [
+                    {
+                        "type": "Proxy",
+                        "hostName": "[concat(variables('apiManagementServiceName'), '.azure-api.net')]",
+                        "negotiateClientCertificate": false,
+                        "defaultSslBinding": true
+                    }
+        ]
+        }
+      },
+        {
+            "type": "Microsoft.ApiManagement/service/apis",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "displayName": "Circuit Breaker Information API",
+                "apiRevision": "1",
+                "description": "The following services are intended to be used on types of Vacuum Circuit Breakers.\n\n**VCB type information**\n  Information about aging and number of operation\n\n**List of VCB types**\n  List of all VCB.\n  \n**Create a VCB and get operational information about an individual VCB**\n  VCB type and number of operations\n  Post operation on for and individual VCB",
+                "subscriptionRequired": true,
+                "protocols": [
+                    "http",
+                    "https"
+                ],
+                "isCurrent": true,
+                "path": "[parameters('apis_sgaaklgapi_path')]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/backends",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/WebApp_sgaaklgapi')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "description": "sgaaklgapi",
+                "url": "https://sgaaklgapi.azurewebsites.net",
+                "protocol": "http",
+                "resourceId": "https://management.azure.com/subscriptions/da05ac29-8f4c-4a13-8c3e-43b5a925aba3/resourceGroups/sgaa-test/providers/Microsoft.Web/sites/sgaaklgapi"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/policies",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - Only the <forward-request> policy element can appear within the <backend> section element.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy position the cursor at the desired insertion point and click on the round button associated with the policy.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n-->\r\n<policies>\r\n  <inbound></inbound>\r\n  <backend>\r\n    <forward-request />\r\n  </backend>\r\n  <outbound></outbound>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/products",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaa')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "displayName": "sgaa",
+                "description": "APIs to manage a knowledge graph implemented in neo4j for switch gear asset analytics.",
+                "subscriptionRequired": true,
+                "approvalRequired": false,
+                "state": "published"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/subscriptions",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/master')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "scope": "[concat(resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName')), '/')]",
+                "displayName": "Built-in all-access subscription",
+                "state": "active",
+                "allowTracing": true
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/tags",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/circuitbreaker')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "displayName": "circuitbreaker"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/tags",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/circuitbreaker-models')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "displayName": "circuitbreaker models"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/create_breaker')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "displayName": "create a specific breaker",
+                "method": "POST",
+                "urlTemplate": "/breakers",
+                "templateParameters": [],
+                "description": "List all available models or",
+                "request": {
+                    "description": "Information about Vacuum Circuit Breaker",
+                    "queryParameters": [],
+                    "headers": [],
+                    "representations": [
+                        {
+                            "contentType": "application/json",
+                            "schemaId": "5fd0edbd4f237c18981b4098",
+                            "typeName": "VacuumCircuitBreakerModelArray"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "VCB type created",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "VacuumCircuitBreakerArray"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 400,
+                        "description": "Wrong arguments exception",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "wrong_argument_exception"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "Exception during job processing",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "exception_during_job_processing"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/create_breaker_model')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "displayName": "create a new vacuum circuit breaker model",
+                "method": "POST",
+                "urlTemplate": "/breakertypes",
+                "templateParameters": [],
+                "description": "List all available types or",
+                "request": {
+                    "description": "Information about Vacuum Circuit Breaker type",
+                    "queryParameters": [],
+                    "headers": [],
+                    "representations": [
+                        {
+                            "contentType": "application/json",
+                            "schemaId": "5fd0edbd4f237c18981b4098",
+                            "typeName": "VacuumCircuitBreakerModelArray"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "VCB model created",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "VacuumCircuitBreakerModelArray"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 400,
+                        "description": "Wrong arguments exception",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "wrong_argument_exception"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "Exception during job processing",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "exception_during_job_processing"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/get_breaker')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "displayName": "get info about a specific vaccum breaker",
+                "method": "GET",
+                "urlTemplate": "/breakers/{vcb_id}",
+                "templateParameters": [
+                    {
+                        "name": "vcb_id",
+                        "description": "String ID of the VCB type to get.",
+                        "type": "string",
+                        "required": true,
+                        "values": []
+                    }
+                ],
+                "description": "get info about a specific vaccum breaker",
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "VCB information",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "VacuumCircuitBreakerArray"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 400,
+                        "description": "Wrong arguments exception",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "wrong_argument_exception"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "Exception during job processing",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "exception_during_job_processing"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/get_breaker_model')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "displayName": "get info about a specific vaccum breaker model",
+                "method": "GET",
+                "urlTemplate": "/breakertypes/{mlfb}",
+                "templateParameters": [
+                    {
+                        "name": "mlfb",
+                        "description": "String ID of the VCB model to get.",
+                        "type": "string",
+                        "required": true,
+                        "values": []
+                    }
+                ],
+                "description": "get info about a specific vaccum breaker model",
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "VCB information",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "VacuumCircuitBreakerModelArray"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 400,
+                        "description": "Wrong arguments exception",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "wrong_argument_exception"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "Exception during job processing",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "exception_during_job_processing"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/post_breaker_i2t')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "displayName": "switching operation of breaker (on/off or off/on) changes the i2t value",
+                "method": "POST",
+                "urlTemplate": "/breakers/{vcb_id}/i2t_dyn",
+                "templateParameters": [
+                    {
+                        "name": "vcb_id",
+                        "description": "String ID of the VCB type to get.",
+                        "type": "string",
+                        "required": true,
+                        "values": []
+                    }
+                ],
+                "description": "switching operation of breaker (on/off or off/on) changes the i2t value",
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "VCB + i2t",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "VacuumCircuitBreakerArray"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 400,
+                        "description": "Wrong arguments exception",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "wrong_argument_exception"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "Exception during job processing",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "exception_during_job_processing"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/post_breaker_op')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "displayName": "switching operation of breaker (on/off or off/on) increases the number of operations",
+                "method": "POST",
+                "urlTemplate": "/breakers/{vcb_id}/operation",
+                "templateParameters": [
+                    {
+                        "name": "vcb_id",
+                        "description": "String ID of the VCB type to get.",
+                        "type": "string",
+                        "required": true,
+                        "values": []
+                    }
+                ],
+                "description": "switching operation of breaker (on/off or off/on) increases the number of operations",
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "VCB + number of operation",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "VacuumCircuitBreakerArray"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 400,
+                        "description": "Wrong arguments exception",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "wrong_argument_exception"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "Exception during job processing",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5fd0edbd4f237c18981b4098",
+                                "typeName": "exception_during_job_processing"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/policies",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"WebApp_sgaaklgapi\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/schemas",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/5fd0edbd4f237c18981b4098')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ],
+            "properties": {
+                "contentType": "application/vnd.ms-azure-apim.swagger.definitions+json",
+                "document": {
+                    "definitions": {}
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/products/apis",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaa/sgaaklgapi')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/products', variables('apiManagementServiceName'), 'sgaa')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/subscriptions",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaa-mindsphere')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/products', variables('apiManagementServiceName'), 'sgaa')]"
+            ],
+            "properties": {
+                "scope": "[resourceId('Microsoft.ApiManagement/service/products', variables('apiManagementServiceName'), 'sgaa')]",
+                "displayName": "SGAA MindSphere",
+                "state": "active",
+                "allowTracing": false
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/tags",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/create_breaker/circuitbreaker')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', variables('apiManagementServiceName'), 'sgaaklgapi', 'create_breaker')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/tags",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/get_breaker/circuitbreaker')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', variables('apiManagementServiceName'), 'sgaaklgapi', 'get_breaker')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/tags",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/post_breaker_i2t/circuitbreaker')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', variables('apiManagementServiceName'), 'sgaaklgapi', 'post_breaker_i2t')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/tags",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/post_breaker_op/circuitbreaker')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', variables('apiManagementServiceName'), 'sgaaklgapi', 'post_breaker_op')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/tags",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/create_breaker_model/circuitbreaker-models')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', variables('apiManagementServiceName'), 'sgaaklgapi', 'create_breaker_model')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/tags",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('apiManagementServiceName'), '/sgaaklgapi/get_breaker_model/circuitbreaker-models')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', variables('apiManagementServiceName'), 'sgaaklgapi', 'get_breaker_model')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementServiceName'), 'sgaaklgapi')]",
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
+            ]
+        }
+            
+
+    ]
+}  
