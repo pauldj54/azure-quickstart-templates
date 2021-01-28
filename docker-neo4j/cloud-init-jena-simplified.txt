@@ -23,15 +23,16 @@ write_files:
       # create a partition table for the disk
       parted -s /dev/sdc mklabel msdos
       # create a single large partition
-      parted -s /dev/sdc mkpart primary ext4 0\% 100\%
+      parted -s -a optimal /dev/sdc mkpart primary ext4 0\% 100\%
       # install the file system
-      mkfs.ext4 /dev/sdc1
+      sudo mkfs -t ext4 /dev/sdc1
       # create the mount point
       mkdir /datadisk
       # mount the disk
-      sudo mount /dev/sdc1 /datadisk/
+      sudo mount -t auto /dev/sdc1 /datadisk/
       # add mount to /etc/fstab to persist across reboots
       echo "/dev/sdc1    /datadisk/    ext4    defaults 0 0" >> /etc/fstab
+      
   - owner: root:root
     path: /etc/deployment/scripts/run_docker_jena.sh
     content: |
@@ -70,7 +71,7 @@ write_files:
       # add neojena4j user to docker group
       sudo usermod -aG docker jena
       sudo usermod -aG docker azureuser
-	  sudo chmod -R 777 /datadisk/jena
+	    sudo chmod -R 777 /datadisk/jena
       
       # pull docker image for apache jena
       docker pull stain/jena-fuseki
