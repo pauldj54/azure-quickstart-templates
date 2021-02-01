@@ -53,7 +53,7 @@ write_files:
       sudo mkdir -p /datadisk/jena/plugins
       sudo chown -R jena /datadisk/jena/plugins
       sudo chgrp -R jena /datadisk/jena/plugins
-      #Group gets write permissions here
+      #Group gets write permissions here:
       sudo chmod -R u+rwX,g+rwX,o+wrx /datadisk/jena/plugins 
       # Create a logs group for all things log related
       sudo groupadd logs
