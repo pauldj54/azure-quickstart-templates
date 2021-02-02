@@ -31,7 +31,7 @@ write_files:
       # mount the disk
       sudo mount /dev/sdc1 /datadisk/
       # add mount to /etc/fstab to persist across reboots
-      echo "/dev/sdc1    /datadisk/    ext4    defaults 0 0" >> /etc/fstab
+      #echo "/dev/sdc1    /datadisk/    ext4    defaults 0 0" >> /etc/fstab
   - owner: root:root
     path: /etc/deployment/scripts/run_docker_jena.sh
     content: |
@@ -44,7 +44,7 @@ write_files:
       sudo mkdir -p /datadisk/jena/data/fuseki 
       sudo chown -R jena /datadisk/jena/data/fuseki
       sudo chgrp -R jena /datadisk/jena/data/fuseki
-	  
+      
       # Create import directory
       sudo mkdir -p /datadisk/jena/import
       sudo chown -R jena /datadisk/jena/import
@@ -52,8 +52,8 @@ write_files:
       # Create plugins directory
       sudo mkdir -p /datadisk/jena/plugins
       sudo chown -R jena /datadisk/jena/plugins
-      sudo chgrp -R jena /datadisk/jena/plugins
       #Group gets write permissions here:
+      sudo chgrp -R jena /datadisk/jena/plugins
       sudo chmod -R u+rwX,g+rwX,o+wrx /datadisk/jena/plugins 
       # Create a logs group for all things log related
       sudo groupadd logs
@@ -70,7 +70,7 @@ write_files:
       # add neojena4j user to docker group
       sudo usermod -aG docker jena
       sudo usermod -aG docker azureuser
-	  sudo chmod -R 777 /datadisk/jena
+      sudo chmod -R 777 /datadisk/jena
       
       # pull docker image for apache jena
       docker pull stain/jena-fuseki
