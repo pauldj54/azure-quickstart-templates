@@ -30,6 +30,7 @@ write_files:
       sudo mount /dev/sdc1 /datadisk/
       # add mount to /etc/fstab to persist across reboots
       # echo "/dev/sdc1    /datadisk/    ext4    defaults 0 0" >> /etc/fstab
+      sudo blkid | grep  '/dev/sdc1:' | awk '{UUID=$2} END{print UUID " /datadisk ext4 defaults,nofail 1 2"}' >> /etc/fstab
   - owner: root:root
     path: /etc/deployment/scripts/run_docker_jena.sh
     content: |
