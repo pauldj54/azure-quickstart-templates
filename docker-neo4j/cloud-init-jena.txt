@@ -21,13 +21,11 @@ write_files:
       # If you have a more complicated setup, then do examine what this
       # script is doing and modify accordingly.
       # create a partition table for the disk
-      parted -s /dev/sdc mklabel msdos
-      # create a single large partition
-      parted -s /dev/sdc mkpart primary ext4 0\% 100\%
+      parted -s -a optimal /dev/sdc mklabel msdos mkpart primary ext4 0\% 100\%
       # install the file system
-      mkfs.ext4 /dev/sdc1
+      sudo mkfs -t ext4 /dev/sdc1
       # create the mount point
-      mkdir /datadisk
+      sudo mkdir /datadisk
       # mount the disk
       sudo mount /dev/sdc1 /datadisk/
       # add mount to /etc/fstab to persist across reboots
@@ -41,6 +39,7 @@ write_files:
       sudo mkdir -p /datadisk/jena/data/fuseki 
       # add azureuse user to docker group
       sudo usermod -aG docker azureuser
+      sudo newgrp docker
       sudo chmod -R 777 /datadisk/jena/
       
       # pull docker image for apache jena
