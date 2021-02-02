@@ -31,7 +31,7 @@ write_files:
       # mount the disk
       sudo mount /dev/sdc1 /datadisk/
       # add mount to /etc/fstab to persist across reboots
-      echo "/dev/sdc1    /datadisk/    ext4    defaults 0 0" >> /etc/fstab
+      # echo "/dev/sdc1    /datadisk/    ext4    defaults 0 0" >> /etc/fstab
   - owner: root:root
     path: /etc/deployment/scripts/run_docker_jena.sh
     content: |
