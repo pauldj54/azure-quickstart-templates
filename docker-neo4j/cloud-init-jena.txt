@@ -41,7 +41,7 @@ write_files:
       sudo mkdir -p /datadisk/jena/data/fuseki 
       # add azureuse user to docker group
       sudo usermod -aG docker azureuser
-	    sudo chmod -R 777 /datadisk/jena/
+      sudo chmod -R 777 /datadisk/jena/
       
       # pull docker image for apache jena
       docker pull stain/jena-fuseki
